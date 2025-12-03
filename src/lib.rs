@@ -1,3 +1,18 @@
+mod asset_resolver;
+mod error;
+mod expression;
+mod interaction;
+mod model;
+mod render;
+
+pub use asset_resolver::{
+    register_host_asset_callback, register_host_asset_map, register_host_asset_resolver,
+};
+pub use error::ComponentError;
+pub use interaction::handle_interaction;
+pub use model::*;
+pub use render::render_card;
+
 #[cfg(target_arch = "wasm32")]
 #[used]
 #[unsafe(link_section = ".greentic.wasi")]
@@ -42,8 +57,8 @@ mod component {
 
 #[cfg(target_arch = "wasm32")]
 mod exports {
-    use greentic_interfaces_guest::component::node;
     use super::component::Component;
+    use greentic_interfaces_guest::component::node;
 
     #[unsafe(export_name = "greentic:component/node@0.4.0#get-manifest")]
     unsafe extern "C" fn export_get_manifest() -> *mut u8 {
@@ -114,23 +129,61 @@ pub fn describe_payload() -> String {
 }
 
 pub fn handle_message(operation: &str, input: &str) -> String {
-    format!("component-adaptive-card::{operation} => {}", input.trim())
+    match parse_invocation(input) {
+        Ok(mut invocation) => {
+            // Allow the operation name to steer mode selection if the host provides it.
+            if operation.eq_ignore_ascii_case("validate") {
+                invocation.mode = InvocationMode::Validate;
+            }
+            match handle_invocation(invocation) {
+                Ok(result) => serde_json::to_string(&result)
+                    .unwrap_or_else(|err| error_payload(&format!("serialization error: {err}"))),
+                Err(err) => error_payload(&err.to_string()),
+            }
+        }
+        Err(err) => error_payload(&format!("invalid invocation: {err}")),
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn describe_payload_is_json() {
-        let payload = describe_payload();
-        let json: serde_json::Value = serde_json::from_str(&payload).expect("valid json");
-        assert_eq!(json["component"]["name"], "component-adaptive-card");
+pub fn handle_invocation(
+    invocation: AdaptiveCardInvocation,
+) -> Result<AdaptiveCardResult, ComponentError> {
+    if invocation.interaction.is_some() {
+        return handle_interaction(&invocation);
     }
 
-    #[test]
-    fn handle_message_round_trips() {
-        let value = handle_message("handle", "demo");
-        assert!(value.contains("demo"));
+    let rendered = render_card(&invocation)?;
+    let rendered_card = match invocation.mode {
+        InvocationMode::Validate => None,
+        InvocationMode::Render | InvocationMode::RenderAndValidate => Some(rendered.card),
+    };
+
+    Ok(AdaptiveCardResult {
+        rendered_card,
+        event: None,
+        state_updates: Vec::new(),
+        session_updates: Vec::new(),
+        card_features: rendered.features,
+        validation_issues: rendered.validation_issues,
+        telemetry_events: Vec::new(),
+    })
+}
+
+fn parse_invocation(input: &str) -> Result<AdaptiveCardInvocation, ComponentError> {
+    #[derive(serde::Deserialize)]
+    #[serde(untagged)]
+    enum Wrapper {
+        Direct(AdaptiveCardInvocation),
+        Nested { invocation: AdaptiveCardInvocation },
     }
+
+    let wrapper: Wrapper = serde_json::from_str(input)?;
+    Ok(match wrapper {
+        Wrapper::Direct(inv) => inv,
+        Wrapper::Nested { invocation } => invocation,
+    })
+}
+
+fn error_payload(message: &str) -> String {
+    serde_json::json!({ "error": message }).to_string()
 }

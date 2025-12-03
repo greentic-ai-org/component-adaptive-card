@@ -1,45 +1,49 @@
 {
   "$schema": "https://greentic-ai.github.io/greentic-component/schemas/v1/component.manifest.schema.json",
-  "id": "ai.greentic.component-adaptive-card",
-  "name": "component-adaptive-card",
-  "version": "0.1.0",
-  "world": "greentic:component/component@0.4.0",
-  "describe_export": "get-manifest",
-  "supports": ["messaging"],
-  "profiles": {
-    "default": "stateless",
-    "supported": ["stateless"]
+  "artifacts": {
+    "component_wasm": "target/wasm32-wasip2/release/component_adaptive_card.wasm"
   },
   "capabilities": {
-    "wasi": {
-      "filesystem": {
-        "mode": "none",
-        "mounts": []
-      },
-      "random": true,
-      "clocks": true
-    },
     "host": {
       "messaging": {
         "inbound": true,
         "outbound": true
       },
-      "telemetry": {
-        "scope": "node"
-      },
       "secrets": {
         "required": []
+      },
+      "telemetry": {
+        "scope": "node"
       }
+    },
+    "wasi": {
+      "clocks": true,
+      "filesystem": {
+        "mode": "none",
+        "mounts": []
+      },
+      "random": true
     }
   },
+  "describe_export": "get-manifest",
+  "hashes": {
+    "component_wasm": "blake3:4d45bb8eff780744417d7c7b6022c20aaf796ed5a1f12c0a16fd6659db18d1b9"
+  },
+  "id": "ai.greentic.component-adaptive-card",
   "limits": {
     "memory_mb": 128,
     "wall_time_ms": 1000
   },
-  "artifacts": {
-    "component_wasm": "target/wasm32-wasip2/release/component_adaptive_card.wasm"
+  "name": "component-adaptive-card",
+  "profiles": {
+    "default": "stateless",
+    "supported": [
+      "stateless"
+    ]
   },
-  "hashes": {
-    "component_wasm": "blake3:0000000000000000000000000000000000000000000000000000000000000000"
-  }
+  "supports": [
+    "messaging"
+  ],
+  "version": "0.1.0",
+  "world": "greentic:component/component@0.4.0"
 }

@@ -4,11 +4,16 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "echo_prefix": {
+    "asset_base_path": {
       "type": "string",
-      "description": "Prefix prepended to every handle response",
-      "default": "component-adaptive-card",
+      "description": "Optional base path for resolving catalog or asset-backed cards.",
+      "default": "assets",
       "x-default-applied": true
+    },
+    "catalog_registry_file": {
+      "type": "string",
+      "description": "Optional path to a JSON map of catalog names to asset paths (fallback for env-based resolution).",
+      "x-optional": true
     }
   }
 }

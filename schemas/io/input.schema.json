@@ -1,12 +1,56 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "component-adaptive-card handle input",
+  "title": "Adaptive Card invocation input",
   "type": "object",
-  "required": ["input"],
+  "required": ["card_source", "card_spec"],
   "properties": {
-    "input": {
+    "envelope": {
+      "description": "Optional Greentic invocation envelope metadata.",
+      "type": "object"
+    },
+    "card_source": {
       "type": "string",
-      "description": "Opaque payload forwarded to handle"
+      "enum": ["inline", "asset", "catalog"],
+      "description": "Where to load the card from."
+    },
+    "card_spec": {
+      "type": "object",
+      "description": "Details for resolving the card source.",
+      "properties": {
+        "inline_json": { "type": ["object", "array"] },
+        "asset_path": { "type": "string" },
+        "catalog_name": { "type": "string" },
+        "template_params": { "type": ["object", "array"] },
+        "asset_registry": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Optional mapping of asset or catalog names to concrete paths."
+        }
+      }
+    },
+    "payload": { "type": ["object", "array", "null"] },
+    "session": { "type": ["object", "array", "null"] },
+    "state": { "type": ["object", "array", "null"] },
+    "interaction": {
+      "type": "object",
+      "required": ["interaction_type", "action_id", "card_instance_id"],
+      "properties": {
+        "interaction_type": {
+          "type": "string",
+          "enum": ["Submit", "Execute", "OpenUrl", "ShowCard", "ToggleVisibility"]
+        },
+        "action_id": { "type": "string" },
+        "verb": { "type": ["string", "null"] },
+        "raw_inputs": { "type": ["object", "array", "string", "null"] },
+        "card_instance_id": { "type": "string" },
+        "metadata": { "type": ["object", "array", "null"] }
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["render", "validate", "renderAndValidate"],
+      "default": "renderAndValidate",
+      "description": "Whether to render, validate only, or both."
     }
   }
 }
