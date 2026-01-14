@@ -32,6 +32,10 @@
         }
       }
     },
+    "node_id": {
+      "type": "string",
+      "description": "Optional node id for resolving state.nodes.<id> context."
+    },
     "payload": { "type": ["object", "array", "null"] },
     "session": { "type": ["object", "array", "null"] },
     "state": { "type": ["object", "array", "null"] },

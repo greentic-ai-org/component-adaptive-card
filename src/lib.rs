@@ -116,7 +116,7 @@ pub fn describe_payload() -> String {
         "component": {
             "name": "component-adaptive-card",
             "org": "ai.greentic",
-            "version": "0.1.0",
+            "version": "0.1.2",
             "world": "greentic:component/component@0.5.0",
             "schemas": {
                 "component": "schemas/component.schema.json",
@@ -169,19 +169,162 @@ pub fn handle_invocation(
     })
 }
 
+#[derive(serde::Deserialize, Default)]
+struct InvocationEnvelope {
+    #[serde(default)]
+    config: Option<AdaptiveCardInvocation>,
+    #[serde(default)]
+    payload: serde_json::Value,
+    #[serde(default)]
+    session: serde_json::Value,
+    #[serde(default)]
+    state: serde_json::Value,
+    #[serde(default)]
+    interaction: Option<CardInteraction>,
+    #[serde(default)]
+    mode: Option<InvocationMode>,
+    #[serde(default)]
+    node_id: Option<String>,
+    #[serde(default)]
+    envelope: Option<greentic_types::InvocationEnvelope>,
+}
+
 fn parse_invocation(input: &str) -> Result<AdaptiveCardInvocation, ComponentError> {
-    #[derive(serde::Deserialize)]
-    #[serde(untagged)]
-    enum Wrapper {
-        Direct(AdaptiveCardInvocation),
-        Nested { invocation: AdaptiveCardInvocation },
+    let value: serde_json::Value = serde_json::from_str(input)?;
+    if let Some(invocation_value) = find_invocation_value(&value) {
+        return serde_json::from_value::<AdaptiveCardInvocation>(invocation_value)
+            .map_err(ComponentError::Serde);
     }
 
-    let wrapper: Wrapper = serde_json::from_str(input)?;
-    Ok(match wrapper {
-        Wrapper::Direct(inv) => inv,
-        Wrapper::Nested { invocation } => invocation,
-    })
+    if let Some(inner) = value.get("config") {
+        if let Ok(invocation) = serde_json::from_value::<AdaptiveCardInvocation>(inner.clone()) {
+            return merge_envelope(invocation, &value);
+        }
+        if let Some(card) = inner.get("card")
+            && let Ok(invocation) = serde_json::from_value::<AdaptiveCardInvocation>(card.clone())
+        {
+            return merge_envelope(invocation, &value);
+        }
+    }
+
+    let mut env: InvocationEnvelope = serde_json::from_value(value)?;
+    if env.config.is_none()
+        && let Ok(invocation) =
+            serde_json::from_value::<AdaptiveCardInvocation>(env.payload.clone())
+    {
+        return Ok(invocation);
+    }
+    let config = env.config.take().unwrap_or_default();
+    Ok(merge_envelope_struct(config, env))
+}
+
+fn merge_envelope(
+    mut inv: AdaptiveCardInvocation,
+    value: &serde_json::Value,
+) -> Result<AdaptiveCardInvocation, ComponentError> {
+    let env: serde_json::Value = value.clone();
+    let payload = env
+        .get("payload")
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let session = env
+        .get("session")
+        .cloned()
+        .unwrap_or(serde_json::Value::Null);
+    let state = env.get("state").cloned().unwrap_or(serde_json::Value::Null);
+    if let Some(node_id) = env.get("node_id").and_then(|v| v.as_str()) {
+        inv.node_id = Some(node_id.to_string());
+    }
+    if !payload.is_null() {
+        inv.payload = payload;
+    }
+    if !session.is_null() {
+        inv.session = session;
+    }
+    if !state.is_null() {
+        inv.state = state;
+    }
+    if inv.interaction.is_none()
+        && let Some(interaction) = env.get("interaction")
+    {
+        inv.interaction = serde_json::from_value(interaction.clone()).ok();
+    }
+    if let Some(mode) = env.get("mode")
+        && let Ok(parsed) = serde_json::from_value::<InvocationMode>(mode.clone())
+    {
+        inv.mode = parsed;
+    }
+    if let Some(envelope) = env.get("envelope") {
+        inv.envelope = serde_json::from_value(envelope.clone()).ok();
+    }
+    Ok(inv)
+}
+
+fn find_invocation_value(value: &serde_json::Value) -> Option<serde_json::Value> {
+    let obj = value.as_object()?;
+    if obj.contains_key("card_source") || obj.contains_key("card_spec") {
+        return Some(value.clone());
+    }
+    if let Some(inv) = obj.get("invocation") {
+        return Some(inv.clone());
+    }
+    if let Some(card) = obj.get("card") {
+        return Some(card.clone());
+    }
+    if let Some(payload) = obj.get("payload")
+        && payload
+            .as_object()
+            .map(|p| p.contains_key("card_source") || p.contains_key("card_spec"))
+            .unwrap_or(false)
+    {
+        return Some(payload.clone());
+    }
+    if let Some(config) = obj.get("config") {
+        if config
+            .as_object()
+            .map(|c| c.contains_key("card_source") || c.contains_key("card_spec"))
+            .unwrap_or(false)
+        {
+            return Some(config.clone());
+        }
+        if let Some(card) = config.get("card") {
+            return Some(card.clone());
+        }
+    }
+    None
+}
+
+fn merge_envelope_struct(
+    mut inv: AdaptiveCardInvocation,
+    env: InvocationEnvelope,
+) -> AdaptiveCardInvocation {
+    if inv.card_spec.inline_json.is_none()
+        && let Ok(candidate) = serde_json::from_value::<AdaptiveCardInvocation>(env.payload.clone())
+    {
+        return candidate;
+    }
+    if env.node_id.is_some() {
+        inv.node_id = env.node_id;
+    }
+    if !env.payload.is_null() {
+        inv.payload = env.payload;
+    }
+    if !env.session.is_null() {
+        inv.session = env.session;
+    }
+    if !env.state.is_null() {
+        inv.state = env.state;
+    }
+    if inv.interaction.is_none() {
+        inv.interaction = env.interaction;
+    }
+    if let Some(mode) = env.mode {
+        inv.mode = mode;
+    }
+    if env.envelope.is_some() {
+        inv.envelope = env.envelope;
+    }
+    inv
 }
 
 fn error_payload(message: &str) -> String {

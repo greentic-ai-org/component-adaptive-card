@@ -15,6 +15,7 @@ fn base_invocation(card: serde_json::Value) -> AdaptiveCardInvocation {
             template_params: None,
             asset_registry: None,
         },
+        node_id: None,
         payload: json!({}),
         session: json!({}),
         state: json!({}),
@@ -56,6 +57,57 @@ fn inline_render_returns_card_and_features() {
 }
 
 #[test]
+fn parses_runner_payload_wrapper() {
+    let input = serde_json::json!({
+        "context": {
+            "team_id": "default",
+            "tenant_id": "local-dev",
+            "user_id": "developer"
+        },
+        "payload": {
+            "card_source": "inline",
+            "card_spec": {
+                "inline_json": {
+                    "type": "AdaptiveCard",
+                    "version": "1.6",
+                    "body": [
+                        { "type": "TextBlock", "text": "Hello {{payload.user.name}}" }
+                    ]
+                }
+            },
+            "payload": { "user": { "name": "Ada" } }
+        }
+    });
+    let input_str = serde_json::to_string(&input).unwrap();
+    let output = component_adaptive_card::handle_message("card", &input_str);
+    let parsed: serde_json::Value = serde_json::from_str(&output).unwrap();
+    assert!(
+        parsed.get("error").is_none(),
+        "unexpected error payload: {parsed}"
+    );
+}
+
+#[test]
+fn handlebars_renders_payload_and_state_input() {
+    let card = json!({
+        "type": "AdaptiveCard",
+        "version": "1.6",
+        "body": [
+            { "type": "TextBlock", "text": "Hello {{payload.user.name}}" },
+            { "type": "TextBlock", "text": "Input: {{name}}" }
+        ]
+    });
+    let mut invocation = base_invocation(card.clone());
+    invocation.payload = json!({ "user": { "name": "Ada" } });
+    invocation.state = json!({ "input": { "name": "ImplicitAda" } });
+
+    let result = handle_invocation(invocation).expect("render should succeed");
+    let rendered = result.rendered_card.expect("card should render");
+    assert_eq!(rendered["body"][0]["text"], "Hello Ada");
+    assert_eq!(rendered["body"][1]["text"], "Input: ImplicitAda");
+}
+
+#[test]
 fn asset_render_loads_card() {
     let spec = CardSpec {
         asset_path: Some("tests/assets/cards/simple.json".to_string()),
@@ -64,6 +116,7 @@ fn asset_render_loads_card() {
     let invocation = AdaptiveCardInvocation {
         card_source: CardSource::Asset,
         card_spec: spec,
+        node_id: None,
         payload: json!({}),
         session: json!({}),
         state: json!({}),
@@ -103,6 +156,7 @@ fn catalog_resolution_uses_env_mapping() {
             asset_registry: None,
             ..Default::default()
         },
+        node_id: None,
         payload: json!({}),
         session: json!({}),
         state: json!({}),
@@ -323,6 +377,7 @@ fn host_asset_registry_resolves_assets() {
             asset_path: Some("host-card".to_string()),
             ..Default::default()
         },
+        node_id: None,
         payload: json!({}),
         session: json!({}),
         state: json!({}),

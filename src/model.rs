@@ -32,8 +32,14 @@ pub enum InvocationMode {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct AdaptiveCardInvocation {
+    #[serde(alias = "card_source")]
     pub card_source: CardSource,
+    #[serde(alias = "card_spec")]
     pub card_spec: CardSpec,
+
+    #[serde(default)]
+    #[serde(alias = "node_id")]
+    pub node_id: Option<String>,
 
     #[serde(default)]
     pub payload: Value,
@@ -67,12 +73,16 @@ pub enum CardInteractionType {
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct CardInteraction {
+    #[serde(alias = "interaction_type")]
     pub interaction_type: CardInteractionType,
+    #[serde(alias = "action_id")]
     pub action_id: String,
     #[serde(default)]
     pub verb: Option<String>,
+    #[serde(alias = "raw_inputs")]
     #[serde(default)]
     pub raw_inputs: Value,
+    #[serde(alias = "card_instance_id")]
     pub card_instance_id: String,
     #[serde(default)]
     pub metadata: Value,

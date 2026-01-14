@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::path::{Path, PathBuf};
 
+use handlebars::Handlebars;
 use serde_json::{Map, Value};
 
 use crate::asset_resolver::resolve_with_host;
@@ -19,6 +20,7 @@ pub struct RenderOutcome {
 
 pub fn render_card(inv: &AdaptiveCardInvocation) -> Result<RenderOutcome, ComponentError> {
     let mut card = resolve_card(inv)?;
+    apply_handlebars(&mut card, inv)?;
     let ctx = BindingContext::from_invocation(inv);
     let engine = SimpleExpressionEngine;
     apply_bindings(&mut card, &ctx, &engine);
@@ -344,6 +346,86 @@ fn apply_bindings(value: &mut Value, ctx: &BindingContext, engine: &dyn Expressi
         }
         _ => {}
     }
+}
+
+fn apply_handlebars(value: &mut Value, inv: &AdaptiveCardInvocation) -> Result<(), ComponentError> {
+    let mut engine = Handlebars::new();
+    engine.set_strict_mode(false);
+    let context = build_handlebars_context(inv);
+    render_handlebars_value(value, &engine, &context)
+}
+
+fn render_handlebars_value(
+    value: &mut Value,
+    engine: &Handlebars<'_>,
+    context: &Value,
+) -> Result<(), ComponentError> {
+    match value {
+        Value::String(text) => {
+            let rendered = engine
+                .render_template(text, context)
+                .map_err(|err| ComponentError::InvalidInput(format!("handlebars: {err}")))?;
+            *value = Value::String(rendered);
+            Ok(())
+        }
+        Value::Array(items) => {
+            for item in items {
+                render_handlebars_value(item, engine, context)?;
+            }
+            Ok(())
+        }
+        Value::Object(map) => {
+            for entry in map.values_mut() {
+                render_handlebars_value(entry, engine, context)?;
+            }
+            Ok(())
+        }
+        _ => Ok(()),
+    }
+}
+
+fn build_handlebars_context(inv: &AdaptiveCardInvocation) -> Value {
+    let mut root = Map::new();
+    root.insert("payload".to_owned(), inv.payload.clone());
+    root.insert("state".to_owned(), inv.state.clone());
+
+    if let Some(node_id) = inv.node_id.as_deref() {
+        root.insert("node_id".to_owned(), Value::String(node_id.to_owned()));
+        if let Some(node) = resolve_state_node(&inv.state, node_id) {
+            if let Some(payload) = node.get("payload") {
+                root.insert("node_payload".to_owned(), payload.clone());
+            }
+            root.insert("node".to_owned(), Value::Object(node));
+        }
+    }
+
+    if let Some(state_input) = resolve_state_input(&inv.state) {
+        for (key, value) in state_input {
+            if is_reserved_handlebars_key(&key) || root.contains_key(&key) {
+                continue;
+            }
+            root.insert(key, value);
+        }
+    }
+
+    Value::Object(root)
+}
+
+fn resolve_state_node(state: &Value, node_id: &str) -> Option<Map<String, Value>> {
+    let nodes = state.get("nodes")?.as_object()?;
+    let node = nodes.get(node_id)?.as_object()?;
+    Some(node.clone())
+}
+
+fn resolve_state_input(state: &Value) -> Option<Map<String, Value>> {
+    state.get("input")?.as_object().cloned()
+}
+
+fn is_reserved_handlebars_key(key: &str) -> bool {
+    matches!(
+        key,
+        "payload" | "state" | "node" | "node_id" | "node_payload"
+    )
 }
 
 fn replace_placeholders(input: &str, ctx: &BindingContext) -> String {

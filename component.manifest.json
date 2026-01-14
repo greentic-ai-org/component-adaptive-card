@@ -98,6 +98,11 @@
                   "type": "enum"
                 },
                 {
+                  "id": "node_id",
+                  "prompt": "Optional node id for resolving state.nodes.<id> context.",
+                  "type": "string"
+                },
+                {
                   "id": "payload",
                   "prompt": "Payload:",
                   "type": "string"
@@ -121,7 +126,7 @@
             ]
           },
           "emit_config": {
-            "template": "{\n  \"node_id\": \"component-adaptive-card\",\n  \"node\": {\n    \"card\": {\n      \"input\": {\n        \"card_source\": \"{{state.card_source}}\",\n        \"card_spec\": \"{{state.card_spec}}\",\n        \"envelope\": \"{{state.envelope}}\",\n        \"interaction\": \"{{state.interaction}}\",\n        \"mode\": \"{{state.mode}}\",\n        \"payload\": \"{{state.payload}}\",\n        \"session\": \"{{state.session}}\",\n        \"state\": \"{{state.state}}\"\n      }\n    },\n    \"routing\": [\n      { \"to\": \"NEXT_NODE_PLACEHOLDER\" }\n    ]\n  }\n}"
+            "template": "{\n  \"node_id\": \"component-adaptive-card\",\n  \"node\": {\n    \"card\": {\n      \"input\": {\n        \"card_source\": \"{{state.card_source}}\",\n        \"card_spec\": \"{{state.card_spec}}\",\n        \"envelope\": \"{{state.envelope}}\",\n        \"interaction\": \"{{state.interaction}}\",\n        \"mode\": \"{{state.mode}}\",\n        \"node_id\": \"{{state.node_id}}\",\n        \"payload\": \"{{state.payload}}\",\n        \"session\": \"{{state.session}}\",\n        \"state\": \"{{state.state}}\"\n      }\n    },\n    \"routing\": [\n      { \"to\": \"NEXT_NODE_PLACEHOLDER\" }\n    ]\n  }\n}"
           }
         }
       }
@@ -141,7 +146,7 @@
     }
   },
   "hashes": {
-    "component_wasm": "blake3:a69de3f46e44ed1f9cc4936629caa990e6c6992fc1bb3cfab650246f195c32a4"
+    "component_wasm": "blake3:0fd738d2f8329d9b63aed1a06a513bab04d10b96bd6794cb8fb73ff935550f5a"
   },
   "id": "ai.greentic.component-adaptive-card",
   "limits": {
@@ -169,6 +174,6 @@
   "supports": [
     "messaging"
   ],
-  "version": "0.1.0",
+  "version": "0.1.2",
   "world": "greentic:component/component@0.5.0"
 }

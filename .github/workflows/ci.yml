@@ -62,7 +62,7 @@ jobs:
       - name: Push OCI artifact to GHCR
         if: github.ref == 'refs/heads/master'
         run: |
-          VERSION=$(jq -r '.version' component.manifest.json)
+          VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
           COMPONENT_NAME=$(jq -r '.name' component.manifest.json)
           WASM_PATH=$(jq -r '.artifacts.component_wasm' component.manifest.json)
           WASM_BASENAME=$(basename "$WASM_PATH")
