@@ -44,6 +44,7 @@
     "title": "component-adaptive-card component configuration",
     "type": "object"
   },
+  "default_operation": "card",
   "describe_export": "get-manifest",
   "dev_flows": {
     "custom": {
@@ -51,20 +52,64 @@
       "graph": {
         "description": "Auto-generated custom config for ai.greentic.component-adaptive-card",
         "id": "ai.greentic.component-adaptive-card.custom",
-        "type": "component-config",
+        "kind": "component-config",
         "nodes": {
           "ask_config": {
             "questions": {
               "fields": [
                 {
-                  "default": "assets",
-                  "id": "asset_base_path",
-                  "prompt": "Optional base path for resolving catalog or asset-backed cards.",
+                  "default": "inline",
+                  "id": "card_source",
+                  "options": [
+                    "inline",
+                    "asset",
+                    "catalog"
+                  ],
+                  "prompt": "Where to load the card from.",
+                  "type": "enum"
+                },
+                {
+                  "default": {
+                    "inline_json": {}
+                  },
+                  "id": "card_spec",
+                  "prompt": "Details for resolving the card source.",
                   "type": "string"
                 },
                 {
-                  "id": "catalog_registry_file",
-                  "prompt": "Optional path to a JSON map of catalog names to asset paths (fallback for env-based resolution).",
+                  "id": "envelope",
+                  "prompt": "Optional Greentic invocation envelope metadata.",
+                  "type": "string"
+                },
+                {
+                  "id": "interaction",
+                  "prompt": "Interaction:",
+                  "type": "string"
+                },
+                {
+                  "default": "renderAndValidate",
+                  "id": "mode",
+                  "options": [
+                    "render",
+                    "validate",
+                    "renderAndValidate"
+                  ],
+                  "prompt": "Whether to render, validate only, or both.",
+                  "type": "enum"
+                },
+                {
+                  "id": "payload",
+                  "prompt": "Payload:",
+                  "type": "string"
+                },
+                {
+                  "id": "session",
+                  "prompt": "Session:",
+                  "type": "string"
+                },
+                {
+                  "id": "state",
+                  "prompt": "State:",
                   "type": "string"
                 }
               ]
@@ -76,7 +121,7 @@
             ]
           },
           "emit_config": {
-            "template": "{\n  \"node_id\": \"COMPONENT_STEP\",\n  \"node\": {\n    \"tool\": {\n      \"component\": \"ai.greentic.component-adaptive-card\",\n      \"asset_base_path\": \"{{state.asset_base_path}}\",\n      \"catalog_registry_file\": \"{{state.catalog_registry_file}}\"\n    },\n    \"routing\": [\n      { \"to\": \"NEXT_NODE_PLACEHOLDER\" }\n    ]\n  }\n}"
+            "template": "{\n  \"node_id\": \"component-adaptive-card\",\n  \"node\": {\n    \"card\": {\n      \"input\": {\n        \"card_source\": \"{{state.card_source}}\",\n        \"card_spec\": \"{{state.card_spec}}\",\n        \"envelope\": \"{{state.envelope}}\",\n        \"interaction\": \"{{state.interaction}}\",\n        \"mode\": \"{{state.mode}}\",\n        \"payload\": \"{{state.payload}}\",\n        \"session\": \"{{state.session}}\",\n        \"state\": \"{{state.state}}\"\n      }\n    },\n    \"routing\": [\n      { \"to\": \"NEXT_NODE_PLACEHOLDER\" }\n    ]\n  }\n}"
           }
         }
       }
@@ -86,17 +131,17 @@
       "graph": {
         "description": "Auto-generated default config for ai.greentic.component-adaptive-card",
         "id": "ai.greentic.component-adaptive-card.default",
-        "type": "component-config",
+        "kind": "component-config",
         "nodes": {
           "emit_config": {
-            "template": "{\n  \"node_id\": \"COMPONENT_STEP\",\n  \"node\": {\n    \"tool\": {\n      \"component\": \"ai.greentic.component-adaptive-card\"\n    },\n    \"routing\": [\n      { \"to\": \"NEXT_NODE_PLACEHOLDER\" }\n    ]\n  }\n}"
+            "template": "{\n  \"node_id\": \"component-adaptive-card\",\n  \"node\": {\n    \"card\": {\n      \"input\": {\n        \"card_spec\": {\"inline_json\":{}}\n      }\n    },\n    \"routing\": [\n      { \"to\": \"NEXT_NODE_PLACEHOLDER\" }\n    ]\n  }\n}"
           }
         }
       }
     }
   },
   "hashes": {
-    "component_wasm": "blake3:78f21520c114744e38146ee15a4a6dbe42271efbd320f0fd103314bbdbf6160d"
+    "component_wasm": "blake3:a69de3f46e44ed1f9cc4936629caa990e6c6992fc1bb3cfab650246f195c32a4"
   },
   "id": "ai.greentic.component-adaptive-card",
   "limits": {
@@ -104,6 +149,17 @@
     "wall_time_ms": 1000
   },
   "name": "component-adaptive-card",
+  "operations": [
+    {
+      "input_schema": {
+        "$ref": "schemas/io/input.schema.json"
+      },
+      "name": "card",
+      "output_schema": {
+        "$ref": "schemas/io/output.schema.json"
+      }
+    }
+  ],
   "profiles": {
     "default": "stateless",
     "supported": [
@@ -114,5 +170,5 @@
     "messaging"
   ],
   "version": "0.1.0",
-  "world": "greentic:component/component@0.4.0"
+  "world": "greentic:component/component@0.5.0"
 }

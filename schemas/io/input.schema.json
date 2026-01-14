@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Adaptive Card invocation input",
   "type": "object",
-  "required": ["card_source", "card_spec"],
+  "required": ["card_spec"],
   "properties": {
     "envelope": {
       "description": "Optional Greentic invocation envelope metadata.",
@@ -11,11 +11,15 @@
     "card_source": {
       "type": "string",
       "enum": ["inline", "asset", "catalog"],
+      "default": "inline",
       "description": "Where to load the card from."
     },
     "card_spec": {
       "type": "object",
       "description": "Details for resolving the card source.",
+      "default": {
+        "inline_json": {}
+      },
       "properties": {
         "inline_json": { "type": ["object", "array"] },
         "asset_path": { "type": "string" },
