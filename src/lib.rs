@@ -4,6 +4,7 @@ mod expression;
 mod interaction;
 mod model;
 mod render;
+mod state_store;
 
 pub use asset_resolver::{
     register_host_asset_callback, register_host_asset_map, register_host_asset_resolver,
@@ -146,8 +147,9 @@ pub fn handle_message(operation: &str, input: &str) -> String {
 }
 
 pub fn handle_invocation(
-    invocation: AdaptiveCardInvocation,
+    mut invocation: AdaptiveCardInvocation,
 ) -> Result<AdaptiveCardResult, ComponentError> {
+    state_store::load_state_if_missing(&mut invocation, None)?;
     if invocation.interaction.is_some() {
         return handle_interaction(&invocation);
     }

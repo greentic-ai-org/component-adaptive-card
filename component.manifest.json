@@ -12,6 +12,11 @@
       "secrets": {
         "required": []
       },
+      "state": {
+        "delete": true,
+        "read": true,
+        "write": true
+      },
       "telemetry": {
         "scope": "node"
       }
@@ -99,22 +104,22 @@
                 },
                 {
                   "id": "node_id",
-                  "prompt": "Optional node id for resolving state.nodes.<id> context.",
+                  "prompt": "Optional node id used to scope persisted state and helper context.",
                   "type": "string"
                 },
                 {
                   "id": "payload",
-                  "prompt": "Payload:",
+                  "prompt": "Explicit input payload used for binding/expression resolution.",
                   "type": "string"
                 },
                 {
                   "id": "session",
-                  "prompt": "Session:",
+                  "prompt": "Optional explicit session metadata (not injected by the runner).",
                   "type": "string"
                 },
                 {
                   "id": "state",
-                  "prompt": "State:",
+                  "prompt": "Optional explicit state override (persistent state uses state-store).",
                   "type": "string"
                 }
               ]
@@ -146,7 +151,7 @@
     }
   },
   "hashes": {
-    "component_wasm": "blake3:0fd738d2f8329d9b63aed1a06a513bab04d10b96bd6794cb8fb73ff935550f5a"
+    "component_wasm": "blake3:8c16725ec52b3a1bbcf617545d54a207274fd5bf81cec8a0aa28a859472f0c14"
   },
   "id": "ai.greentic.component-adaptive-card",
   "limits": {

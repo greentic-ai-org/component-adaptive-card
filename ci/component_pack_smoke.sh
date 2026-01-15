@@ -11,6 +11,8 @@ NODE_ID="adaptive_card_step"
 COMPONENT_ID="ai.greentic.component-adaptive-card"
 FLOW_FILE="${PACK_DIR}/flows/adaptive-card.ygtc"
 WASM_SRC="${ROOT_DIR}/target/wasm32-wasip2/release/component_adaptive_card.wasm"
+NO_STATE_TARGET_DIR="${TMP_DIR}/target_no_state"
+NO_STATE_WASM="${NO_STATE_TARGET_DIR}/wasm32-wasip2/release/component_adaptive_card.wasm"
 
 cleanup() {
   if [[ "${KEEP_TEMP}" == "1" ]]; then
@@ -25,6 +27,9 @@ echo "Temp dir: ${TMP_DIR}"
 
 make -C "${ROOT_DIR}" build
 
+cargo build --release --target wasm32-wasip2 --no-default-features --target-dir "${NO_STATE_TARGET_DIR}"
+WASM_SRC="${NO_STATE_WASM}"
+
 if [[ ! -f "${WASM_SRC}" ]]; then
   echo "Missing wasm artifact at ${WASM_SRC}" >&2
   exit 1
@@ -33,6 +38,10 @@ fi
 greentic-pack new --dir "${PACK_DIR}" "${PACK_ID}"
 mkdir -p "${PACK_DIR}/components"
 cp "${WASM_SRC}" "${PACK_DIR}/components/${COMPONENT_ID}.wasm"
+cp "${ROOT_DIR}/component.manifest.json" "${PACK_DIR}/components/component.manifest.json"
+sed -i \
+  "s|\"component_wasm\": \"target/wasm32-wasip2/release/component_adaptive_card.wasm\"|\"component_wasm\": \"${COMPONENT_ID}.wasm\"|" \
+  "${PACK_DIR}/components/component.manifest.json"
 
 greentic-flow new \
   --flow "${FLOW_FILE}" \
@@ -49,8 +58,8 @@ cat > "${TMP_DIR}/payload.json" <<'JSON'
       "type": "AdaptiveCard",
       "version": "1.6",
       "body": [
-        { "type": "TextBlock", "text": "Hello {{payload.user.name}}" },
-        { "type": "TextBlock", "text": "Input: {{name}}" },
+        { "type": "TextBlock", "text": "Hello @{payload.user.name}" },
+        { "type": "TextBlock", "text": "Input: @{payload.input_name}" },
         { "type": "TextBlock", "text": "${payload.user.tier == \"pro\" ? \"Tier Pro\" : \"Tier Standard\"}" },
         { "type": "TextBlock", "text": "Title: @{params.title||\"Welcome\"}" }
       ],
@@ -67,11 +76,8 @@ cat > "${TMP_DIR}/payload.json" <<'JSON'
       "name": "Ada",
       "tier": "pro"
     }
-  },
-  "state": {
-    "input": {
-      "name": "ImplicitAda"
-    }
+    ,
+    "input_name": "ExplicitAda"
   },
   "interaction": {
     "interaction_type": "Submit",
@@ -139,8 +145,8 @@ if command -v jq >/dev/null 2>&1; then
     echo "${RESULT}" >&2
     exit 1
   }
-  echo "${RESULT}" | jq -e '.renderedCard.body[1].text == "Input: ImplicitAda"' >/dev/null || {
-    echo "Rendered card did not include implicit state input value." >&2
+  echo "${RESULT}" | jq -e '.renderedCard.body[1].text == "Input: ExplicitAda"' >/dev/null || {
+    echo "Rendered card did not include explicit payload input value." >&2
     echo "${RESULT}" >&2
     exit 1
   }
@@ -165,8 +171,8 @@ else
     echo "${OUTPUT_LINE}" >&2
     exit 1
   }
-  echo "${OUTPUT_LINE}" | grep -q '"Input: ImplicitAda"' || {
-    echo "Rendered card did not include implicit state input value." >&2
+  echo "${OUTPUT_LINE}" | grep -q '"Input: ExplicitAda"' || {
+    echo "Rendered card did not include explicit payload input value." >&2
     echo "${OUTPUT_LINE}" >&2
     exit 1
   }

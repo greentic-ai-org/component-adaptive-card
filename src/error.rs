@@ -11,4 +11,6 @@ pub enum ComponentError {
     Io(#[from] std::io::Error),
     #[error("asset error: {0}")]
     Asset(String),
+    #[error("state store error: {0}")]
+    StateStore(String),
 }

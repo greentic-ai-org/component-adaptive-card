@@ -34,11 +34,20 @@
     },
     "node_id": {
       "type": "string",
-      "description": "Optional node id for resolving state.nodes.<id> context."
+      "description": "Optional node id used to scope persisted state and helper context."
     },
-    "payload": { "type": ["object", "array", "null"] },
-    "session": { "type": ["object", "array", "null"] },
-    "state": { "type": ["object", "array", "null"] },
+    "payload": {
+      "type": ["object", "array", "null"],
+      "description": "Explicit input payload used for binding/expression resolution."
+    },
+    "session": {
+      "type": ["object", "array", "null"],
+      "description": "Optional explicit session metadata (not injected by the runner)."
+    },
+    "state": {
+      "type": ["object", "array", "null"],
+      "description": "Optional explicit state override (persistent state uses state-store)."
+    },
     "interaction": {
       "type": "object",
       "required": ["interaction_type", "action_id", "card_instance_id"],

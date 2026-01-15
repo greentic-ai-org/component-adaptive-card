@@ -6,6 +6,7 @@ use crate::model::{
     CardInteractionType, SessionUpdateOp, StateUpdateOp,
 };
 use crate::render::render_card;
+use crate::state_store;
 
 pub fn handle_interaction(
     inv: &AdaptiveCardInvocation,
@@ -15,7 +16,9 @@ pub fn handle_interaction(
         .clone()
         .ok_or_else(|| ComponentError::InvalidInput("interaction is required".into()))?;
 
-    let resolved = render_card(inv)?;
+    let mut invocation = inv.clone();
+    state_store::load_state_if_missing(&mut invocation, Some(&interaction))?;
+    let resolved = render_card(&invocation)?;
     let normalized_inputs = normalize_inputs(&interaction.raw_inputs);
     let mut state_updates = Vec::new();
     let mut session_updates = Vec::new();
@@ -96,6 +99,14 @@ pub fn handle_interaction(
             .map(|s| s.to_string()),
         metadata: interaction.metadata.clone(),
     };
+
+    let mut persisted_state = if invocation.state.is_null() {
+        Value::Object(Map::new())
+    } else {
+        invocation.state.clone()
+    };
+    state_store::apply_updates(&mut persisted_state, &state_updates);
+    state_store::persist_state(&invocation, Some(&interaction), &persisted_state)?;
 
     Ok(AdaptiveCardResult {
         rendered_card: Some(resolved.card),
