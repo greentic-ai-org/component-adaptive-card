@@ -1,0 +1,15 @@
+{
+  "error": {
+    "code": "AC_ASSET_NOT_FOUND",
+    "details": {
+      "validation_issues": [
+        {
+          "code": "AC_ASSET_NOT_FOUND",
+          "message": "/projects/ai/greentic-ng/component-adaptive-card/tests/assets/cards/missing.json",
+          "path": "/card_spec"
+        }
+      ]
+    },
+    "message": "asset not found"
+  }
+}
