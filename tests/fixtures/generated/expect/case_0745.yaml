@@ -1,0 +1,14 @@
+{
+  "case_id": "case_0745",
+  "combo": {
+    "card_source": "catalog",
+    "mode": "render",
+    "bindings": "at_path",
+    "assets": "registry",
+    "interaction": "none",
+    "node_id": "none"
+  },
+  "expect": {
+    "pass": true
+  }
+}

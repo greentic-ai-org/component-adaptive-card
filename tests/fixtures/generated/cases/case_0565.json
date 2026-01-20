@@ -1,0 +1,16 @@
+{
+  "mode": "validate",
+  "card_source": "asset",
+  "card_spec": {
+    "template_params": {},
+    "asset_path": "card.json"
+  },
+  "interaction": {
+    "interaction_type": "ShowCard",
+    "action_id": "details",
+    "card_instance_id": "card-1",
+    "metadata": {
+      "subcardId": "details"
+    }
+  }
+}

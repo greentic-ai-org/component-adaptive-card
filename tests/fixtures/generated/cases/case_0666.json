@@ -1,0 +1,9 @@
+{
+  "mode": "renderAndValidate",
+  "card_source": "asset",
+  "card_spec": {
+    "template_params": {},
+    "asset_path": "missing.json"
+  },
+  "node_id": "matrix-node"
+}

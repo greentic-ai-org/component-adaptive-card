@@ -1,0 +1,18 @@
+{
+  "case_id": "case_0935",
+  "combo": {
+    "card_source": "catalog",
+    "mode": "validate",
+    "bindings": "expr",
+    "assets": "missing",
+    "interaction": "toggle",
+    "node_id": "none"
+  },
+  "expect": {
+    "pass": false,
+    "error_code": "AC_ASSET_NOT_FOUND",
+    "issue_codes": [
+      "AC_ASSET_NOT_FOUND"
+    ]
+  }
+}

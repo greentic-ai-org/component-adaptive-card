@@ -1,0 +1,18 @@
+{
+  "case_id": "case_0474",
+  "combo": {
+    "card_source": "asset",
+    "mode": "render",
+    "bindings": "mixed",
+    "assets": "missing",
+    "interaction": "none",
+    "node_id": "present"
+  },
+  "expect": {
+    "pass": false,
+    "error_code": "AC_ASSET_NOT_FOUND",
+    "issue_codes": [
+      "AC_ASSET_NOT_FOUND"
+    ]
+  }
+}

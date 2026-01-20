@@ -1,0 +1,14 @@
+{
+  "case_id": "case_0143",
+  "combo": {
+    "card_source": "inline",
+    "mode": "validate",
+    "bindings": "handlebars",
+    "assets": "missing",
+    "interaction": "toggle",
+    "node_id": "none"
+  },
+  "expect": {
+    "pass": true
+  }
+}

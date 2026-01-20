@@ -1,0 +1,14 @@
+{
+  "case_id": "case_0338",
+  "combo": {
+    "card_source": "inline",
+    "mode": "renderAndValidate",
+    "bindings": "mixed",
+    "assets": "registry",
+    "interaction": "none",
+    "node_id": "present"
+  },
+  "expect": {
+    "pass": true
+  }
+}

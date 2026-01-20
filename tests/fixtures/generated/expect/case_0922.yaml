@@ -1,0 +1,14 @@
+{
+  "case_id": "case_0922",
+  "combo": {
+    "card_source": "catalog",
+    "mode": "validate",
+    "bindings": "expr",
+    "assets": "env",
+    "interaction": "none",
+    "node_id": "present"
+  },
+  "expect": {
+    "pass": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "case_id": "case_0422",
+  "combo": {
+    "card_source": "asset",
+    "mode": "render",
+    "bindings": "defaults",
+    "assets": "env",
+    "interaction": "showcard",
+    "node_id": "present"
+  },
+  "expect": {
+    "pass": true
+  }
+}

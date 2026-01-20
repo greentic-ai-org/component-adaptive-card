@@ -1,0 +1,29 @@
+{
+  "mode": "render",
+  "card_source": "inline",
+  "card_spec": {
+    "template_params": {},
+    "inline_json": {
+      "type": "AdaptiveCard",
+      "version": "1.3",
+      "body": [
+        {
+          "type": "TextBlock",
+          "text": "${payload.count == 1 ? \"one\" : \"many\"}"
+        }
+      ]
+    }
+  },
+  "node_id": "matrix-node",
+  "interaction": {
+    "interaction_type": "Submit",
+    "action_id": "save",
+    "card_instance_id": "card-1",
+    "raw_inputs": {
+      "comment": "ok"
+    }
+  },
+  "payload": {
+    "count": 1
+  }
+}

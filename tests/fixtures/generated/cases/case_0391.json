@@ -1,0 +1,19 @@
+{
+  "mode": "render",
+  "card_source": "asset",
+  "card_spec": {
+    "template_params": {},
+    "asset_path": "card.json",
+    "asset_registry": {
+      "card.json": "card.json"
+    }
+  },
+  "interaction": {
+    "interaction_type": "ToggleVisibility",
+    "action_id": "section-1",
+    "card_instance_id": "card-1",
+    "metadata": {
+      "visible": true
+    }
+  }
+}
