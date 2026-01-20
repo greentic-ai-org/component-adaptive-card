@@ -1,0 +1,1 @@
+{"error":{"code":"AC_SCHEMA_INVALID","details":{"validation_issues":[{"code":"AC_INVOCATION_INVALID_ENUM","message":"\"nope\" is not one of \"render\", \"validate\" or \"renderAndValidate\"","path":"/mode"}]},"message":"invocation schema validation failed"}}

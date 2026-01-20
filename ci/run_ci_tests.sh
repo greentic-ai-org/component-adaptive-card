@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+if ! command -v greentic-integration-tester >/dev/null 2>&1; then
+  echo "greentic-integration-tester not found; aborting."
+  exit 1
+fi
+
+SEED="${SEED:-101}"
+ARTIFACTS_ROOT="${ARTIFACTS_ROOT:-artifacts}"
+
+echo "Running PR gate gtests..."
+./tests/tools/gen_matrix --mode pairwise
+mkdir -p "${ARTIFACTS_ROOT}/readme" "${ARTIFACTS_ROOT}/matrix" "${ARTIFACTS_ROOT}/negative"
+greentic-integration-tester run --gtest tests/gtests/README --artifacts-dir "${ARTIFACTS_ROOT}/readme"
+greentic-integration-tester run --gtest tests/gtests/matrix/pairwise --artifacts-dir "${ARTIFACTS_ROOT}/matrix"
+greentic-integration-tester run --gtest tests/gtests/negative/smoke --artifacts-dir "${ARTIFACTS_ROOT}/negative"
+
+echo "Running nightly chaos gtests..."
+./tests/tools/gen_matrix --mode full
+mkdir -p "${ARTIFACTS_ROOT}/nightly/matrix" "${ARTIFACTS_ROOT}/nightly/negative"
+greentic-integration-tester run --gtest tests/gtests/matrix --artifacts-dir "${ARTIFACTS_ROOT}/nightly/matrix" --seed "${SEED}"
+greentic-integration-tester run --gtest tests/gtests/negative --artifacts-dir "${ARTIFACTS_ROOT}/nightly/negative" --seed "${SEED}"
+
+echo "All CI gtests passed."

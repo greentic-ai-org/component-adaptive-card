@@ -1,0 +1,60 @@
+{
+  "cardFeatures": {
+    "requiresFeatures": null,
+    "usedActions": [
+      "Action.Submit"
+    ],
+    "usedElements": [
+      "AdaptiveCard",
+      "Input.Text"
+    ],
+    "usesAuth": false,
+    "usesMedia": false,
+    "usesShowCard": false,
+    "usesToggleVisibility": false,
+    "version": "1.6"
+  },
+  "event": {
+    "actionId": "save",
+    "actionType": "Submit",
+    "cardId": "readme-card",
+    "cardInstanceId": "readme-card",
+    "inputs": {
+      "comment": "Hello from state"
+    },
+    "metadata": null,
+    "route": null,
+    "subcardId": null,
+    "verb": null
+  },
+  "renderedCard": {
+    "actions": [
+      {
+        "id": "save",
+        "title": "Save",
+        "type": "Action.Submit"
+      }
+    ],
+    "body": [
+      {
+        "id": "comment",
+        "type": "Input.Text"
+      }
+    ],
+    "type": "AdaptiveCard",
+    "version": "1.6"
+  },
+  "sessionUpdates": [],
+  "stateUpdates": [
+    {
+      "Merge": {
+        "path": "form_data",
+        "value": {
+          "comment": "Hello from state"
+        }
+      }
+    }
+  ],
+  "telemetryEvents": [],
+  "validationIssues": []
+}

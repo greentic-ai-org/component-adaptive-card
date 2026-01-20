@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "flow": "main.ygtc",
+  "nodes": {
+    "start": {
+      "source": {
+        "kind": "local",
+        "path": "component_adaptive_card.wasm"
+      }
+    },
+    "end": {
+      "source": {
+        "kind": "local",
+        "path": "component_adaptive_card.wasm"
+      }
+    },
+    "adaptive-card": {
+      "source": {
+        "kind": "local",
+        "path": "component_adaptive_card.wasm"
+      }
+    }
+  }
+}

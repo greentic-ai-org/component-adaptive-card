@@ -86,7 +86,7 @@ greentic-dev flow add-step \
   --node-id adaptive-card \
   --operation card \
   --payload '{"input":{"card_source":"asset","card_spec":{"asset_path":"card.json","template_params":{}},"mode":"renderAndValidate"}}' \
-  --local-wasm target/wasm32-wasip2/release/component_adaptive_card.wasm
+  --component oci://ghcr.io/greentic-ai/components/component-adaptive-card:latest
 ```
 
 Default mode expects an explicit payload, so no interactive prompts are required.
@@ -103,7 +103,7 @@ greentic-dev flow add-step \
   --after start \
   --node-id adaptive-card \
   --mode config \
-  --local-wasm target/wasm32-wasip2/release/component_adaptive_card.wasm \
+  --component oci://ghcr.io/greentic-ai/components/component-adaptive-card:latest \
   --manifest component.manifest.json
 ```
 
@@ -116,7 +116,7 @@ greentic-dev flow add-step \
   --node-id adaptive-card \
   --mode config \
   --config-flow ./dev_flows.custom \
-  --local-wasm target/wasm32-wasip2/release/component_adaptive_card.wasm \
+  --component oci://ghcr.io/greentic-ai/components/component-adaptive-card:latest \
   --manifest component.manifest.json
 ```
 

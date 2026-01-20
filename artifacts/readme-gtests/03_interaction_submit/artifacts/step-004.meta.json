@@ -1,0 +1,7 @@
+{
+  "step": 4,
+  "line_no": 8,
+  "command": "greentic-component test --wasm ./component_adaptive_card.wasm --manifest ./component.manifest.json --op card --input-json {\"card_source\":\"asset\",\"card_spec\":{\"asset_path\":\"card.json\",\"template_params\":{}},\"mode\":\"renderAndValidate\",\"node_id\":\"readme-card\",\"interaction\":{\"interaction_type\":\"Submit\",\"action_id\":\"save\",\"card_instance_id\":\"readme-card\",\"raw_inputs\":{\"comment\":\"Hello from state\"}}} --state-dump",
+  "exit_code": 0,
+  "duration_ms": 9313
+}

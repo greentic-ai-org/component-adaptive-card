@@ -83,8 +83,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-wasip2
-      - name: Cache cargo binaries
-        uses: actions/cache@v4
+      - name: Restore cargo binaries cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.cargo/bin
@@ -100,6 +100,15 @@ jobs:
           fi
       - name: Install Greentic CLIs
         run: cargo binstall -y greentic-component greentic-dev greentic-flow greentic-integration-tester
+      - name: Save cargo binaries cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-bins-${{ hashFiles('**/Cargo.lock') }}
       - name: Build WASM (release)
         run: cargo build --target wasm32-wasip2 --release
       - name: Run README gtests

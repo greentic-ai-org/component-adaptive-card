@@ -1,0 +1,7 @@
+{
+  "step": 3,
+  "line_no": 48,
+  "command": "greentic-dev flow doctor /tmp/gtest-6Vn3DH/flows/main.ygtc",
+  "exit_code": 0,
+  "duration_ms": 13
+}
