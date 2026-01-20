@@ -108,7 +108,7 @@ fn resolve_catalog_mapping(name: &str, spec: &CardSpec) -> Result<Option<String>
     #[cfg(target_arch = "wasm32")]
     {
         let _ = name;
-        return Ok(None);
+        Ok(None)
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -126,7 +126,7 @@ fn resolve_catalog_mapping(name: &str, spec: &CardSpec) -> Result<Option<String>
 fn env_asset_registry() -> Result<Option<BTreeMap<String, String>>, ComponentError> {
     #[cfg(target_arch = "wasm32")]
     {
-        return Ok(None);
+        Ok(None)
     }
     #[cfg(not(target_arch = "wasm32"))]
     {

@@ -2,18 +2,17 @@ use once_cell::sync::Lazy;
 use serde_json::Value;
 
 use jsonschema::error::ValidationErrorKind;
-use jsonschema::{Draft, JSONSchema};
+use jsonschema::{Validator, draft7};
 
 use crate::model::ValidationIssue;
 
-static INVOCATION_SCHEMA: Lazy<JSONSchema> = Lazy::new(|| {
+static INVOCATION_SCHEMA: Lazy<Validator> = Lazy::new(|| {
     let schema: Value = serde_json::from_str(include_str!(
         "../schemas/adaptive-card.invocation.v1.schema.json"
     ))
     .expect("invocation schema JSON must be valid");
-    JSONSchema::options()
-        .with_draft(Draft::Draft7)
-        .compile(&schema)
+    draft7::options()
+        .build(&schema)
         .expect("invocation schema must compile")
 });
 
@@ -35,24 +34,20 @@ pub fn locate_invocation_candidate(value: &Value) -> Option<Value> {
 }
 
 pub fn validate_invocation_schema(value: &Value) -> Vec<ValidationIssue> {
-    let mut issues = Vec::new();
-    let result = INVOCATION_SCHEMA.validate(value);
-    if let Err(errors) = result {
-        for error in errors {
-            issues.push(map_schema_error(&error));
-        }
-    }
-    issues
+    INVOCATION_SCHEMA
+        .iter_errors(value)
+        .map(|error| map_schema_error(&error))
+        .collect()
 }
 
 fn map_schema_error(error: &jsonschema::ValidationError) -> ValidationIssue {
-    let code = match error.kind {
+    let code = match error.kind() {
         ValidationErrorKind::Required { .. } => "AC_INVOCATION_MISSING_FIELD",
         ValidationErrorKind::Type { .. } => "AC_INVOCATION_INVALID_TYPE",
         ValidationErrorKind::Enum { .. } => "AC_INVOCATION_INVALID_ENUM",
         _ => "AC_INVOCATION_SCHEMA_ERROR",
     };
-    let raw_path = error.instance_path.to_string();
+    let raw_path = error.instance_path().to_string();
     let path = if raw_path.is_empty() {
         "/".to_string()
     } else {

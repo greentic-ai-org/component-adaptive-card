@@ -3,6 +3,7 @@ use component_adaptive_card::{
     InvocationMode, ValidationMode, handle_invocation, register_host_asset_callback,
 };
 use serde_json::json;
+#[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 
 fn base_invocation(card: serde_json::Value) -> AdaptiveCardInvocation {
