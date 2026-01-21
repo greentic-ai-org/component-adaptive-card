@@ -10,4 +10,5 @@ mkdir -p "${ARTIFACTS_DIR}"
 
 greentic-integration-tester run \
   --gtest "${ROOT}/tests/gtests/matrix/pairwise/case_0001.gtest" \
-  --artifacts-dir "${ARTIFACTS_DIR}"
+  --artifacts-dir "${ARTIFACTS_DIR}" \
+  --errors
