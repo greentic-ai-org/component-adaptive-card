@@ -85,7 +85,7 @@ greentic-dev flow add-step \
   --after start \
   --node-id adaptive-card \
   --operation card \
-  --payload '{"input":{"card_source":"asset","card_spec":{"asset_path":"card.json","template_params":{}},"mode":"renderAndValidate"}}' \
+  --payload '{"card_source":"asset","card_spec":{"asset_path":"card.json","template_params":{}},"mode":"renderAndValidate"}' \
   --component oci://ghcr.io/greentic-ai/components/component-adaptive-card:latest
 ```
 

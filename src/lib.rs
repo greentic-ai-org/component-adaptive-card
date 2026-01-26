@@ -8,6 +8,8 @@ mod state_store;
 mod trace;
 mod validation;
 
+use once_cell::sync::Lazy;
+
 pub use asset_resolver::{
     register_host_asset_callback, register_host_asset_map, register_host_asset_resolver,
 };
@@ -15,6 +17,19 @@ pub use error::ComponentError;
 pub use interaction::handle_interaction;
 pub use model::*;
 pub use render::render_card;
+
+static COMPONENT_SCHEMA_JSON: Lazy<serde_json::Value> = Lazy::new(|| {
+    serde_json::from_str(include_str!("../schemas/component.schema.json"))
+        .expect("failed to parse component schema")
+});
+static INPUT_SCHEMA_JSON: Lazy<serde_json::Value> = Lazy::new(|| {
+    serde_json::from_str(include_str!("../schemas/io/input.schema.json"))
+        .expect("failed to parse input schema")
+});
+static OUTPUT_SCHEMA_JSON: Lazy<serde_json::Value> = Lazy::new(|| {
+    serde_json::from_str(include_str!("../schemas/io/output.schema.json"))
+        .expect("failed to parse output schema")
+});
 
 #[cfg(target_arch = "wasm32")]
 #[used]
@@ -122,9 +137,9 @@ pub fn describe_payload() -> String {
             "version": "0.1.2",
             "world": "greentic:component/component@0.5.0",
             "schemas": {
-                "component": "schemas/component.schema.json",
-                "input": "schemas/io/input.schema.json",
-                "output": "schemas/io/output.schema.json"
+                "component": COMPONENT_SCHEMA_JSON.clone(),
+                "input": INPUT_SCHEMA_JSON.clone(),
+                "output": OUTPUT_SCHEMA_JSON.clone()
             }
         }
     })

@@ -168,7 +168,7 @@
     }
   },
   "hashes": {
-    "component_wasm": "blake3:a9aa537a210ad1393240765422b7f036a6e940f0b95ff2efa3ddc389719a37b8"
+    "component_wasm": "blake3:c41c9141f0bcda42fa5a44f6a5bbe8961b7ea3052716c30cef8e1adee909e8b0"
   },
   "id": "ai.greentic.component-adaptive-card",
   "limits": {
@@ -179,11 +179,247 @@
   "operations": [
     {
       "input_schema": {
-        "$ref": "schemas/io/input.schema.json"
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Adaptive Card invocation input",
+        "type": "object",
+        "required": [
+          "card_spec"
+        ],
+        "properties": {
+          "envelope": {
+            "description": "Optional Greentic invocation envelope metadata.",
+            "type": "object"
+          },
+          "card_source": {
+            "type": "string",
+            "enum": [
+              "inline",
+              "asset",
+              "catalog"
+            ],
+            "default": "inline",
+            "description": "Where to load the card from."
+          },
+          "card_spec": {
+            "type": "object",
+            "description": "Details for resolving the card source.",
+            "default": {
+              "inline_json": {}
+            },
+            "properties": {
+              "inline_json": {
+                "type": [
+                  "object",
+                  "array"
+                ]
+              },
+              "asset_path": {
+                "type": "string"
+              },
+              "catalog_name": {
+                "type": "string"
+              },
+              "template_params": {
+                "type": [
+                  "object",
+                  "array"
+                ]
+              },
+              "asset_registry": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Optional mapping of asset or catalog names to concrete paths."
+              }
+            }
+          },
+          "node_id": {
+            "type": "string",
+            "description": "Optional node id used to scope persisted state and helper context."
+          },
+          "payload": {
+            "type": [
+              "object",
+              "array",
+              "null"
+            ],
+            "description": "Explicit input payload used for binding/expression resolution."
+          },
+          "session": {
+            "type": [
+              "object",
+              "array",
+              "null"
+            ],
+            "description": "Optional explicit session metadata (not injected by the runner)."
+          },
+          "state": {
+            "type": [
+              "object",
+              "array",
+              "null"
+            ],
+            "description": "Optional explicit state override (persistent state uses state-store)."
+          },
+          "interaction": {
+            "type": "object",
+            "required": [
+              "interaction_type",
+              "action_id",
+              "card_instance_id"
+            ],
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              },
+              "interaction_type": {
+                "type": "string",
+                "enum": [
+                  "Submit",
+                  "Execute",
+                  "OpenUrl",
+                  "ShowCard",
+                  "ToggleVisibility"
+                ]
+              },
+              "action_id": {
+                "type": "string"
+              },
+              "verb": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "raw_inputs": {
+                "type": [
+                  "object",
+                  "array",
+                  "string",
+                  "null"
+                ]
+              },
+              "card_instance_id": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": [
+                  "object",
+                  "array",
+                  "null"
+                ]
+              }
+            }
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "render",
+              "validate",
+              "renderAndValidate"
+            ],
+            "default": "renderAndValidate",
+            "description": "Whether to render, validate only, or both."
+          },
+          "validation_mode": {
+            "type": "string",
+            "enum": [
+              "off",
+              "warn",
+              "error"
+            ],
+            "default": "warn",
+            "description": "How to handle invocation schema validation issues."
+          }
+        }
       },
       "name": "card",
       "output_schema": {
-        "$ref": "schemas/io/output.schema.json"
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "Adaptive Card result output",
+        "type": "object",
+        "properties": {
+          "rendered_card": {
+            "type": [
+              "object",
+              "array",
+              "null"
+            ]
+          },
+          "event": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "state_updates": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "session_updates": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "card_features": {
+            "type": "object",
+            "properties": {
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "used_elements": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "used_actions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "uses_show_card": {
+                "type": "boolean"
+              },
+              "uses_toggle_visibility": {
+                "type": "boolean"
+              },
+              "uses_media": {
+                "type": "boolean"
+              },
+              "uses_auth": {
+                "type": "boolean"
+              },
+              "requires_features": {
+                "type": [
+                  "object",
+                  "array",
+                  "null"
+                ]
+              }
+            }
+          },
+          "validation_issues": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "telemetry_events": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
       }
     }
   ],

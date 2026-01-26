@@ -1,7 +1,13 @@
 #SET OUT=${WORK_DIR}/catalog_render.json
+#MKDIR ${WORK_DIR}/artifacts
+#MKDIR ${WORK_DIR}/artifacts/readme-gtests
+#MKDIR ${WORK_DIR}/artifacts/readme-gtests/02_catalog_render_validate
+#MKDIR ${WORK_DIR}/artifacts/readme-gtests/02_catalog_render_validate/artifacts
 #RUN cp ${REPO_ROOT}/target/wasm32-wasip2/release/component_adaptive_card.wasm ${WORK_DIR}/component_adaptive_card.wasm
 #EXPECT_EXIT 0
 #RUN cp ${REPO_ROOT}/component.manifest.json ${WORK_DIR}/component.manifest.json
+#EXPECT_EXIT 0
+#RUN cp -R ${REPO_ROOT}/schemas ${WORK_DIR}/schemas
 #EXPECT_EXIT 0
 #RUN cp ${REPO_ROOT}/card.json ${WORK_DIR}/card.json
 #EXPECT_EXIT 0
