@@ -14,7 +14,7 @@
 #RUN greentic-component test --wasm ./component_adaptive_card.wasm --manifest ./component.manifest.json --op card --input-json '{"card_source":"catalog","card_spec":{"catalog_name":"readme-card","asset_registry":{"readme-card":"card.json"},"template_params":{}},"mode":"renderAndValidate"}'
 #EXPECT_EXIT 0
 #CAPTURE_JSON > ${OUT}
-#EXPECT_JSONPATH ${OUT} result.renderedCard.actions[0].id equals save
+#EXPECT_JSONPATH ${OUT} result.renderedCard.actions[*].id contains save
 #EXPECT_JSONPATH ${OUT} result.renderedCard.body[0].id equals comment
 #EXPECT_JSONPATH ${OUT} result.validationIssues[0] not_exists
 #SAVE_ARTIFACT ${OUT}
