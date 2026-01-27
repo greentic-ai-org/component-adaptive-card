@@ -363,32 +363,6 @@ fn merge_envelope(
     Ok(inv)
 }
 
-#[cfg(test)]
-mod debug_tests {
-    use super::*;
-    use serde_json::json;
-
-    #[test]
-    fn parse_payload_value() {
-        let input = json!({
-            "card_spec": {
-                "inline_json": {
-                    "type": "AdaptiveCard",
-                    "version": "1.3",
-                    "body": [
-                        { "type": "TextBlock", "text": "@{payload.title}" }
-                    ]
-                }
-            },
-            "payload": {
-                "title": "Hello"
-            }
-        });
-        let invocation = parse_invocation_value(&input).expect("should parse");
-        println!("payload: {}", invocation.payload);
-    }
-}
-
 fn merge_envelope_struct(
     mut inv: AdaptiveCardInvocation,
     env: InvocationEnvelope,
@@ -561,5 +535,31 @@ fn parse_validation_mode(value: &serde_json::Value) -> Option<ValidationMode> {
         "warn" => Some(ValidationMode::Warn),
         "error" => Some(ValidationMode::Error),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod debug_tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn parse_payload_value() {
+        let input = json!({
+            "card_spec": {
+                "inline_json": {
+                    "type": "AdaptiveCard",
+                    "version": "1.3",
+                    "body": [
+                        { "type": "TextBlock", "text": "@{payload.title}" }
+                    ]
+                }
+            },
+            "payload": {
+                "title": "Hello"
+            }
+        });
+        let invocation = parse_invocation_value(&input).expect("should parse");
+        println!("payload: {}", invocation.payload);
     }
 }

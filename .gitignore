@@ -5,3 +5,5 @@
 *.tmp
 .greentic/
 artifacts/
+result.json
+trace.json
