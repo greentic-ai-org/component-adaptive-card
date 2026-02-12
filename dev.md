@@ -8,6 +8,8 @@ Channel-agnostic Adaptive Card engine for Greentic components. It renders Adapti
 ## Requirements
 - Rust 1.90+
 - `wasm32-wasip2` target (`rustup target add wasm32-wasip2`)
+- Component ABI `0.6.0` (`greentic:component/component-v0-v6-v0@0.6.0`)
+- `greentic-interfaces-guest` with `features = ["component-v0-6"]` for wasm builds
 
 ## Development
 ```bash

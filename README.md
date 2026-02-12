@@ -6,6 +6,15 @@ This component is designed to be used inside Greentic flows (via `greentic-dev f
 
 ---
 
+## Greentic ABI compatibility
+
+- Component ABI: `greentic:component/component-v0-v6-v0@0.6.0`
+- Guest bindings: `greentic-interfaces-guest` with `features = ["component-v0-6"]`
+
+If you compile this component with different interface versions or features, exports will not match the manifest world.
+
+---
+
 ## What are Adaptive Cards?
 
 Adaptive Cards are a JSON-based UI description format (“cards”) that host apps (e.g. Microsoft Teams, Bot Framework Web Chat, Webex) can render. You author a single card payload, and host apps render it according to their capabilities.

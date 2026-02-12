@@ -1,3 +1,5 @@
+#![cfg_attr(not(target_arch = "wasm32"), allow(dead_code))]
+
 mod asset_resolver;
 mod error;
 mod expression;
@@ -8,6 +10,18 @@ mod state_store;
 mod trace;
 mod validation;
 
+use std::collections::{BTreeMap, BTreeSet};
+
+use greentic_types::cbor::canonical;
+use greentic_types::schemas::common::schema_ir::{AdditionalProperties, SchemaIr};
+use greentic_types::schemas::component::v0_6_0::{
+    ComponentDescribe, ComponentInfo, ComponentOperation, ComponentRunInput, ComponentRunOutput,
+    I18nText, schema_hash,
+};
+#[cfg(target_arch = "wasm32")]
+use greentic_types::schemas::component::v0_6_0::{
+    ComponentQaSpec, QaMode as ComponentQaMode, Question, QuestionKind,
+};
 use once_cell::sync::Lazy;
 
 pub use asset_resolver::{
@@ -17,6 +31,12 @@ pub use error::ComponentError;
 pub use interaction::handle_interaction;
 pub use model::*;
 pub use render::render_card;
+
+const COMPONENT_NAME: &str = "component-adaptive-card";
+const COMPONENT_ORG: &str = "ai.greentic";
+const COMPONENT_VERSION: &str = "0.1.12";
+const COMPONENT_ID: &str = "ai.greentic.component-adaptive-card";
+const COMPONENT_ROLE: &str = "tool";
 
 static COMPONENT_SCHEMA_JSON: Lazy<serde_json::Value> = Lazy::new(|| {
     serde_json::from_str(include_str!("../schemas/component.schema.json"))
@@ -38,104 +58,188 @@ static WASI_TARGET_MARKER: [u8; 13] = *b"wasm32-wasip2";
 
 #[cfg(target_arch = "wasm32")]
 mod component {
-    use greentic_interfaces_guest::component::node::{
-        self, ExecCtx, InvokeResult, LifecycleStatus, StreamEvent,
+    use greentic_interfaces_guest::component_v0_6::{
+        component_descriptor, component_i18n, component_qa, component_runtime, component_schema,
     };
 
-    use super::{describe_payload, handle_message};
+    use super::{
+        apply_answers_cbor, component_describe_cbor, component_info_cbor, config_schema_cbor,
+        i18n_keys, input_schema_cbor, output_schema_cbor, qa_spec_cbor, run_component_cbor,
+    };
 
     pub(super) struct Component;
 
-    impl node::Guest for Component {
-        fn get_manifest() -> String {
-            describe_payload()
+    impl component_descriptor::Guest for Component {
+        fn get_component_info() -> Vec<u8> {
+            component_info_cbor()
         }
 
-        fn on_start(_ctx: ExecCtx) -> Result<LifecycleStatus, String> {
-            Ok(LifecycleStatus::Ok)
+        fn describe() -> Vec<u8> {
+            component_describe_cbor()
+        }
+    }
+
+    impl component_schema::Guest for Component {
+        fn input_schema() -> Vec<u8> {
+            input_schema_cbor()
         }
 
-        fn on_stop(_ctx: ExecCtx, _reason: String) -> Result<LifecycleStatus, String> {
-            Ok(LifecycleStatus::Ok)
+        fn output_schema() -> Vec<u8> {
+            output_schema_cbor()
         }
 
-        fn invoke(_ctx: ExecCtx, op: String, input: String) -> InvokeResult {
-            InvokeResult::Ok(handle_message(&op, &input))
+        fn config_schema() -> Vec<u8> {
+            config_schema_cbor()
+        }
+    }
+
+    impl component_runtime::Guest for Component {
+        fn run(input: Vec<u8>, state: Vec<u8>) -> component_runtime::RunResult {
+            let (output, new_state) = run_component_cbor(input, state);
+            component_runtime::RunResult { output, new_state }
+        }
+    }
+
+    impl component_qa::Guest for Component {
+        fn qa_spec(mode: component_qa::QaMode) -> Vec<u8> {
+            qa_spec_cbor(mode)
         }
 
-        fn invoke_stream(_ctx: ExecCtx, op: String, input: String) -> Vec<StreamEvent> {
-            vec![
-                StreamEvent::Progress(0),
-                StreamEvent::Data(handle_message(&op, &input)),
-                StreamEvent::Done,
-            ]
+        fn apply_answers(
+            mode: component_qa::QaMode,
+            current_config: Vec<u8>,
+            answers: Vec<u8>,
+        ) -> Vec<u8> {
+            apply_answers_cbor(mode, current_config, answers)
+        }
+    }
+
+    impl component_i18n::Guest for Component {
+        fn i18n_keys() -> Vec<String> {
+            i18n_keys()
         }
     }
 }
 
 #[cfg(target_arch = "wasm32")]
 mod exports {
+    use greentic_interfaces_guest::component_v0_6::{
+        component_descriptor, component_i18n, component_qa, component_runtime, component_schema,
+    };
+
     use super::component::Component;
-    use greentic_interfaces_guest::component::node;
 
-    #[unsafe(export_name = "greentic:component/node@0.5.0#get-manifest")]
-    unsafe extern "C" fn export_get_manifest() -> *mut u8 {
-        unsafe { node::_export_get_manifest_cabi::<Component>() }
+    #[unsafe(export_name = "greentic:component/component-descriptor@0.6.0#get-component-info")]
+    unsafe extern "C" fn export_get_component_info() -> *mut u8 {
+        unsafe { component_descriptor::_export_get_component_info_cabi::<Component>() }
     }
 
-    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#get-manifest")]
-    unsafe extern "C" fn post_return_get_manifest(arg0: *mut u8) {
-        unsafe { node::__post_return_get_manifest::<Component>(arg0) };
+    #[unsafe(export_name = "cabi_post_greentic:component/component-descriptor@0.6.0#get-component-info")]
+    unsafe extern "C" fn post_return_get_component_info(arg0: *mut u8) {
+        unsafe { component_descriptor::__post_return_get_component_info::<Component>(arg0) };
     }
 
-    #[unsafe(export_name = "greentic:component/node@0.5.0#on-start")]
-    unsafe extern "C" fn export_on_start(arg0: *mut u8) -> *mut u8 {
-        unsafe { node::_export_on_start_cabi::<Component>(arg0) }
+    #[unsafe(export_name = "greentic:component/component-descriptor@0.6.0#describe")]
+    unsafe extern "C" fn export_describe() -> *mut u8 {
+        unsafe { component_descriptor::_export_describe_cabi::<Component>() }
     }
 
-    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#on-start")]
-    unsafe extern "C" fn post_return_on_start(arg0: *mut u8) {
-        unsafe { node::__post_return_on_start::<Component>(arg0) };
+    #[unsafe(export_name = "cabi_post_greentic:component/component-descriptor@0.6.0#describe")]
+    unsafe extern "C" fn post_return_describe(arg0: *mut u8) {
+        unsafe { component_descriptor::__post_return_describe::<Component>(arg0) };
     }
 
-    #[unsafe(export_name = "greentic:component/node@0.5.0#on-stop")]
-    unsafe extern "C" fn export_on_stop(arg0: *mut u8) -> *mut u8 {
-        unsafe { node::_export_on_stop_cabi::<Component>(arg0) }
+    #[unsafe(export_name = "greentic:component/component-schema@0.6.0#input-schema")]
+    unsafe extern "C" fn export_input_schema() -> *mut u8 {
+        unsafe { component_schema::_export_input_schema_cabi::<Component>() }
     }
 
-    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#on-stop")]
-    unsafe extern "C" fn post_return_on_stop(arg0: *mut u8) {
-        unsafe { node::__post_return_on_stop::<Component>(arg0) };
+    #[unsafe(export_name = "cabi_post_greentic:component/component-schema@0.6.0#input-schema")]
+    unsafe extern "C" fn post_return_input_schema(arg0: *mut u8) {
+        unsafe { component_schema::__post_return_input_schema::<Component>(arg0) };
     }
 
-    #[unsafe(export_name = "greentic:component/node@0.5.0#invoke")]
-    unsafe extern "C" fn export_invoke(arg0: *mut u8) -> *mut u8 {
-        unsafe { node::_export_invoke_cabi::<Component>(arg0) }
+    #[unsafe(export_name = "greentic:component/component-schema@0.6.0#output-schema")]
+    unsafe extern "C" fn export_output_schema() -> *mut u8 {
+        unsafe { component_schema::_export_output_schema_cabi::<Component>() }
     }
 
-    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#invoke")]
-    unsafe extern "C" fn post_return_invoke(arg0: *mut u8) {
-        unsafe { node::__post_return_invoke::<Component>(arg0) };
+    #[unsafe(export_name = "cabi_post_greentic:component/component-schema@0.6.0#output-schema")]
+    unsafe extern "C" fn post_return_output_schema(arg0: *mut u8) {
+        unsafe { component_schema::__post_return_output_schema::<Component>(arg0) };
     }
 
-    #[unsafe(export_name = "greentic:component/node@0.5.0#invoke-stream")]
-    unsafe extern "C" fn export_invoke_stream(arg0: *mut u8) -> *mut u8 {
-        unsafe { node::_export_invoke_stream_cabi::<Component>(arg0) }
+    #[unsafe(export_name = "greentic:component/component-schema@0.6.0#config-schema")]
+    unsafe extern "C" fn export_config_schema() -> *mut u8 {
+        unsafe { component_schema::_export_config_schema_cabi::<Component>() }
     }
 
-    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#invoke-stream")]
-    unsafe extern "C" fn post_return_invoke_stream(arg0: *mut u8) {
-        unsafe { node::__post_return_invoke_stream::<Component>(arg0) };
+    #[unsafe(export_name = "cabi_post_greentic:component/component-schema@0.6.0#config-schema")]
+    unsafe extern "C" fn post_return_config_schema(arg0: *mut u8) {
+        unsafe { component_schema::__post_return_config_schema::<Component>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/component-runtime@0.6.0#run")]
+    unsafe extern "C" fn export_run(
+        arg0: *mut u8,
+        arg1: usize,
+        arg2: *mut u8,
+        arg3: usize,
+    ) -> *mut u8 {
+        unsafe { component_runtime::_export_run_cabi::<Component>(arg0, arg1, arg2, arg3) }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/component-runtime@0.6.0#run")]
+    unsafe extern "C" fn post_return_run(arg0: *mut u8) {
+        unsafe { component_runtime::__post_return_run::<Component>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/component-qa@0.6.0#qa-spec")]
+    unsafe extern "C" fn export_qa_spec(arg0: i32) -> *mut u8 {
+        unsafe { component_qa::_export_qa_spec_cabi::<Component>(arg0) }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/component-qa@0.6.0#qa-spec")]
+    unsafe extern "C" fn post_return_qa_spec(arg0: *mut u8) {
+        unsafe { component_qa::__post_return_qa_spec::<Component>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/component-qa@0.6.0#apply-answers")]
+    unsafe extern "C" fn export_apply_answers(
+        arg0: i32,
+        arg1: *mut u8,
+        arg2: usize,
+        arg3: *mut u8,
+        arg4: usize,
+    ) -> *mut u8 {
+        unsafe {
+            component_qa::_export_apply_answers_cabi::<Component>(arg0, arg1, arg2, arg3, arg4)
+        }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/component-qa@0.6.0#apply-answers")]
+    unsafe extern "C" fn post_return_apply_answers(arg0: *mut u8) {
+        unsafe { component_qa::__post_return_apply_answers::<Component>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/component-i18n@0.6.0#i18n-keys")]
+    unsafe extern "C" fn export_i18n_keys() -> *mut u8 {
+        unsafe { component_i18n::_export_i18n_keys_cabi::<Component>() }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/component-i18n@0.6.0#i18n-keys")]
+    unsafe extern "C" fn post_return_i18n_keys(arg0: *mut u8) {
+        unsafe { component_i18n::__post_return_i18n_keys::<Component>(arg0) };
     }
 }
 
 pub fn describe_payload() -> String {
     serde_json::json!({
         "component": {
-            "name": "component-adaptive-card",
-            "org": "ai.greentic",
-            "version": "0.1.2",
-            "world": "greentic:component/component@0.5.0",
+            "name": COMPONENT_NAME,
+            "org": COMPONENT_ORG,
+            "version": COMPONENT_VERSION,
+            "world": "greentic:component/component-v0-v6-v0@0.6.0",
             "schemas": {
                 "component": COMPONENT_SCHEMA_JSON.clone(),
                 "input": INPUT_SCHEMA_JSON.clone(),
@@ -144,6 +248,273 @@ pub fn describe_payload() -> String {
         }
     })
     .to_string()
+}
+
+fn encode_cbor<T: serde::Serialize>(value: &T) -> Vec<u8> {
+    canonical::to_canonical_cbor_allow_floats(value).expect("encode cbor")
+}
+
+fn decode_cbor<T: for<'de> serde::Deserialize<'de>>(bytes: &[u8]) -> Result<T, ComponentError> {
+    canonical::from_cbor(bytes)
+        .map_err(|err| ComponentError::InvalidInput(format!("failed to decode cbor: {err}")))
+}
+
+fn schema_from_json(value: &serde_json::Value) -> SchemaIr {
+    if let Some(one_of) = value.get("oneOf").and_then(|v| v.as_array()) {
+        return SchemaIr::OneOf {
+            variants: one_of.iter().map(schema_from_json).collect(),
+        };
+    }
+    if let Some(any_of) = value.get("anyOf").and_then(|v| v.as_array()) {
+        return SchemaIr::OneOf {
+            variants: any_of.iter().map(schema_from_json).collect(),
+        };
+    }
+    if let Some(types) = value.get("type").and_then(|v| v.as_array()) {
+        return SchemaIr::OneOf {
+            variants: types
+                .iter()
+                .map(|entry| schema_from_json(&serde_json::json!({ "type": entry })))
+                .collect(),
+        };
+    }
+
+    match value.get("type").and_then(|v| v.as_str()) {
+        Some("object") => {
+            let properties = value
+                .get("properties")
+                .and_then(|v| v.as_object())
+                .map(|props| {
+                    props
+                        .iter()
+                        .map(|(name, schema)| (name.clone(), schema_from_json(schema)))
+                        .collect::<BTreeMap<_, _>>()
+                })
+                .unwrap_or_default();
+            let required = value
+                .get("required")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|entry| entry.as_str().map(ToOwned::to_owned))
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default();
+            let additional = match value.get("additionalProperties") {
+                Some(serde_json::Value::Bool(false)) => AdditionalProperties::Forbid,
+                Some(serde_json::Value::Object(obj)) => AdditionalProperties::Schema(Box::new(
+                    schema_from_json(&serde_json::Value::Object(obj.clone())),
+                )),
+                _ => AdditionalProperties::Allow,
+            };
+            SchemaIr::Object {
+                properties,
+                required,
+                additional,
+            }
+        }
+        Some("array") => {
+            let items =
+                value
+                    .get("items")
+                    .map(schema_from_json)
+                    .unwrap_or_else(|| SchemaIr::String {
+                        min_len: Some(0),
+                        max_len: None,
+                        regex: None,
+                        format: None,
+                    });
+            SchemaIr::Array {
+                items: Box::new(items),
+                min_items: value.get("minItems").and_then(|v| v.as_u64()),
+                max_items: value.get("maxItems").and_then(|v| v.as_u64()),
+            }
+        }
+        Some("string") => SchemaIr::String {
+            min_len: value.get("minLength").and_then(|v| v.as_u64()),
+            max_len: value.get("maxLength").and_then(|v| v.as_u64()),
+            regex: value
+                .get("pattern")
+                .and_then(|v| v.as_str())
+                .map(ToOwned::to_owned),
+            format: value
+                .get("format")
+                .and_then(|v| v.as_str())
+                .map(ToOwned::to_owned),
+        },
+        Some("integer") => SchemaIr::Int {
+            min: value.get("minimum").and_then(|v| v.as_i64()),
+            max: value.get("maximum").and_then(|v| v.as_i64()),
+        },
+        Some("number") => SchemaIr::Float {
+            min: value.get("minimum").and_then(|v| v.as_f64()),
+            max: value.get("maximum").and_then(|v| v.as_f64()),
+        },
+        Some("boolean") => SchemaIr::Bool,
+        Some("null") => SchemaIr::Null,
+        _ => SchemaIr::String {
+            min_len: Some(0),
+            max_len: None,
+            regex: None,
+            format: None,
+        },
+    }
+}
+
+fn component_info() -> ComponentInfo {
+    ComponentInfo {
+        id: COMPONENT_ID.to_string(),
+        version: COMPONENT_VERSION.to_string(),
+        role: COMPONENT_ROLE.to_string(),
+        display_name: Some(I18nText::new(
+            "adaptive_card.display_name",
+            Some("Adaptive Card".to_string()),
+        )),
+    }
+}
+
+fn input_schema_ir() -> SchemaIr {
+    schema_from_json(&INPUT_SCHEMA_JSON)
+}
+
+fn output_schema_ir() -> SchemaIr {
+    schema_from_json(&OUTPUT_SCHEMA_JSON)
+}
+
+fn config_schema_ir() -> SchemaIr {
+    schema_from_json(&COMPONENT_SCHEMA_JSON)
+}
+
+fn component_describe() -> ComponentDescribe {
+    let input = input_schema_ir();
+    let output = output_schema_ir();
+    let config = config_schema_ir();
+    let hash = schema_hash(&input, &output, &config).unwrap_or_default();
+    ComponentDescribe {
+        info: component_info(),
+        provided_capabilities: Vec::new(),
+        required_capabilities: Vec::new(),
+        metadata: BTreeMap::new(),
+        operations: vec![ComponentOperation {
+            id: "card".to_string(),
+            display_name: Some(I18nText::new(
+                "adaptive_card.operation.card",
+                Some("Render adaptive card".to_string()),
+            )),
+            input: ComponentRunInput { schema: input },
+            output: ComponentRunOutput { schema: output },
+            defaults: BTreeMap::new(),
+            redactions: Vec::new(),
+            constraints: BTreeMap::new(),
+            schema_hash: hash,
+        }],
+        config_schema: config,
+    }
+}
+
+fn component_info_cbor() -> Vec<u8> {
+    encode_cbor(&component_info())
+}
+
+fn component_describe_cbor() -> Vec<u8> {
+    encode_cbor(&component_describe())
+}
+
+fn input_schema_cbor() -> Vec<u8> {
+    encode_cbor(&input_schema_ir())
+}
+
+fn output_schema_cbor() -> Vec<u8> {
+    encode_cbor(&output_schema_ir())
+}
+
+fn config_schema_cbor() -> Vec<u8> {
+    encode_cbor(&config_schema_ir())
+}
+
+#[cfg(target_arch = "wasm32")]
+fn qa_spec_cbor(mode: greentic_interfaces_guest::component_v0_6::component_qa::QaMode) -> Vec<u8> {
+    let mode = match mode {
+        greentic_interfaces_guest::component_v0_6::component_qa::QaMode::Default => {
+            ComponentQaMode::Default
+        }
+        greentic_interfaces_guest::component_v0_6::component_qa::QaMode::Setup => {
+            ComponentQaMode::Setup
+        }
+        greentic_interfaces_guest::component_v0_6::component_qa::QaMode::Upgrade => {
+            ComponentQaMode::Upgrade
+        }
+        greentic_interfaces_guest::component_v0_6::component_qa::QaMode::Remove => {
+            ComponentQaMode::Remove
+        }
+    };
+    let spec = ComponentQaSpec {
+        mode,
+        title: I18nText::new(
+            "adaptive_card.qa.title",
+            Some("Adaptive Card settings".to_string()),
+        ),
+        description: None,
+        questions: vec![Question {
+            id: "card_source".to_string(),
+            label: I18nText::new(
+                "adaptive_card.qa.card_source",
+                Some("Card source".to_string()),
+            ),
+            help: None,
+            error: None,
+            kind: QuestionKind::Text,
+            required: false,
+            default: None,
+        }],
+        defaults: BTreeMap::new(),
+    };
+    encode_cbor(&spec)
+}
+
+#[cfg(target_arch = "wasm32")]
+fn apply_answers_cbor(
+    _mode: greentic_interfaces_guest::component_v0_6::component_qa::QaMode,
+    current_config: Vec<u8>,
+    answers: Vec<u8>,
+) -> Vec<u8> {
+    let current: Result<serde_json::Value, _> = canonical::from_cbor(&current_config);
+    let incoming: Result<serde_json::Value, _> = canonical::from_cbor(&answers);
+    let merged = match (current.ok(), incoming.ok()) {
+        (_, Some(value @ serde_json::Value::Object(_))) => value,
+        (Some(value @ serde_json::Value::Object(_)), _) => value,
+        _ => serde_json::json!({}),
+    };
+    encode_cbor(&merged)
+}
+
+fn i18n_keys() -> Vec<String> {
+    let mut keys = BTreeSet::new();
+    keys.insert("adaptive_card.qa.title".to_string());
+    keys.insert("adaptive_card.qa.card_source".to_string());
+    keys.into_iter().collect()
+}
+
+fn run_component_cbor(input: Vec<u8>, _state: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+    let input_json: Result<serde_json::Value, _> = decode_cbor(&input);
+    let output_json = match input_json {
+        Ok(value) => {
+            let op = value
+                .get("operation")
+                .and_then(|v| v.as_str())
+                .unwrap_or("card");
+            let raw = serde_json::to_string(&value).unwrap_or_else(|_| "{}".to_string());
+            handle_message(op, &raw)
+        }
+        Err(err) => error_payload(
+            "AC_SCHEMA_INVALID",
+            "invalid cbor invocation",
+            Some(serde_json::Value::String(err.to_string())),
+        ),
+    };
+    let parsed: serde_json::Value =
+        serde_json::from_str(&output_json).unwrap_or_else(|_| serde_json::json!({}));
+    (encode_cbor(&parsed), encode_cbor(&serde_json::json!({})))
 }
 
 pub fn handle_message(operation: &str, input: &str) -> String {
