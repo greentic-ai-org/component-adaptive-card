@@ -122,6 +122,43 @@ mod component {
 }
 
 #[cfg(target_arch = "wasm32")]
+mod legacy_component_v0_5 {
+    use greentic_interfaces_guest::component::node::{
+        self, ExecCtx, InvokeResult, LifecycleStatus, StreamEvent,
+    };
+
+    use super::{describe_payload, handle_message};
+
+    pub(super) struct ComponentV05;
+
+    impl node::Guest for ComponentV05 {
+        fn get_manifest() -> String {
+            describe_payload()
+        }
+
+        fn on_start(_ctx: ExecCtx) -> Result<LifecycleStatus, String> {
+            Ok(LifecycleStatus::Ok)
+        }
+
+        fn on_stop(_ctx: ExecCtx, _reason: String) -> Result<LifecycleStatus, String> {
+            Ok(LifecycleStatus::Ok)
+        }
+
+        fn invoke(_ctx: ExecCtx, op: String, input: String) -> InvokeResult {
+            InvokeResult::Ok(handle_message(&op, &input))
+        }
+
+        fn invoke_stream(_ctx: ExecCtx, op: String, input: String) -> Vec<StreamEvent> {
+            vec![
+                StreamEvent::Progress(0),
+                StreamEvent::Data(handle_message(&op, &input)),
+                StreamEvent::Done,
+            ]
+        }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
 mod exports {
     use greentic_interfaces_guest::component_v0_6::{
         component_descriptor, component_i18n, component_qa, component_runtime, component_schema,
@@ -233,13 +270,70 @@ mod exports {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+mod legacy_exports_v0_5 {
+    use greentic_interfaces_guest::component::node;
+
+    use super::legacy_component_v0_5::ComponentV05;
+
+    #[unsafe(export_name = "greentic:component/node@0.5.0#get-manifest")]
+    unsafe extern "C" fn export_get_manifest() -> *mut u8 {
+        unsafe { node::_export_get_manifest_cabi::<ComponentV05>() }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#get-manifest")]
+    unsafe extern "C" fn post_return_get_manifest(arg0: *mut u8) {
+        unsafe { node::__post_return_get_manifest::<ComponentV05>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/node@0.5.0#on-start")]
+    unsafe extern "C" fn export_on_start(arg0: *mut u8) -> *mut u8 {
+        unsafe { node::_export_on_start_cabi::<ComponentV05>(arg0) }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#on-start")]
+    unsafe extern "C" fn post_return_on_start(arg0: *mut u8) {
+        unsafe { node::__post_return_on_start::<ComponentV05>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/node@0.5.0#on-stop")]
+    unsafe extern "C" fn export_on_stop(arg0: *mut u8) -> *mut u8 {
+        unsafe { node::_export_on_stop_cabi::<ComponentV05>(arg0) }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#on-stop")]
+    unsafe extern "C" fn post_return_on_stop(arg0: *mut u8) {
+        unsafe { node::__post_return_on_stop::<ComponentV05>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/node@0.5.0#invoke")]
+    unsafe extern "C" fn export_invoke(arg0: *mut u8) -> *mut u8 {
+        unsafe { node::_export_invoke_cabi::<ComponentV05>(arg0) }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#invoke")]
+    unsafe extern "C" fn post_return_invoke(arg0: *mut u8) {
+        unsafe { node::__post_return_invoke::<ComponentV05>(arg0) };
+    }
+
+    #[unsafe(export_name = "greentic:component/node@0.5.0#invoke-stream")]
+    unsafe extern "C" fn export_invoke_stream(arg0: *mut u8) -> *mut u8 {
+        unsafe { node::_export_invoke_stream_cabi::<ComponentV05>(arg0) }
+    }
+
+    #[unsafe(export_name = "cabi_post_greentic:component/node@0.5.0#invoke-stream")]
+    unsafe extern "C" fn post_return_invoke_stream(arg0: *mut u8) {
+        unsafe { node::__post_return_invoke_stream::<ComponentV05>(arg0) };
+    }
+}
+
 pub fn describe_payload() -> String {
     serde_json::json!({
         "component": {
             "name": COMPONENT_NAME,
             "org": COMPONENT_ORG,
             "version": COMPONENT_VERSION,
-            "world": "greentic:component/component-v0-v6-v0@0.6.0",
+            "world": "greentic:component/component@0.6.0",
             "schemas": {
                 "component": COMPONENT_SCHEMA_JSON.clone(),
                 "input": INPUT_SCHEMA_JSON.clone(),
