@@ -433,5 +433,5 @@
     "messaging"
   ],
   "version": "0.1.2",
-  "world": "greentic:component/component@0.5.0"
+  "world": "greentic:component/component@0.6.0"
 }
