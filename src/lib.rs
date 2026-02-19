@@ -647,10 +647,6 @@ pub fn handle_message(operation: &str, input: &str) -> String {
             );
         }
     };
-    eprintln!(
-        "DEBUG invocation payload: {}",
-        serde_json::to_string(&invocation.payload).unwrap_or_else(|_| "\"<error>\"".to_string())
-    );
     // Allow the operation name to steer mode selection if the host provides it.
     if operation.eq_ignore_ascii_case("validate") {
         invocation.mode = InvocationMode::Validate;
